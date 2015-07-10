@@ -31,6 +31,7 @@ L.Draw.Polygon = L.Draw.Polyline.extend({
 
 		// The first marker should have a click handler to close the polygon
 		if (markerCount === 1) {
+			this._markers[0].setZIndexOffset(9999);
 			this._markers[0].on('click', this._finishShape, this);
 		}
 

@@ -245,32 +245,25 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 
 			this._tooltip.updateContent(this._getTooltipText());
 
-			// Make a transparent marker that will used to catch click events. These click
-			// events will create the vertices. We need to do this so we can ensure that
-			// we can create vertices over other map layers (markers, vector layers). We
-			// also do not want to trigger any click handlers of objects we are clicking on
-			// while drawing.
-			if (!this._mouseMarker) {
-				this._mouseMarker = L.marker(this._map.getCenter(), {
-					icon: L.divIcon({
-						className: 'leaflet-mouse-marker',
-						iconAnchor: [20, 20],
-						iconSize: [40, 40]
-					}),
-					opacity: 0,
-					zIndexOffset: this.options.zIndexOffset
-				});
-			}
+			this._map.on('zoomend', this._onZoomEnd, this);
 
-			this._mouseMarker
-				.on('mousedown', this._onMouseDown, this)
-				.addTo(this._map);
+			this._onActionEnd = this._onActionEnd.bind(this);
+			this._onActionStart = this._onActionStart.bind(this);
 
-			this._map
-				.on('mousemove', this._onMouseMove, this)
-				.on('mouseup', this._onMouseUp, this)
-				.on('zoomend', this._onZoomEnd, this);
+			this._map.getContainer().addEventListener('touchend', this._onActionEnd);
+			this._map.getContainer().addEventListener('touchstart', this._onActionStart);
 		}
+	},
+
+	_onActionStart: function (e) {
+		if (!this._markers || this._markers.length < 3 || this._markers[0]._icon != e.target) {
+			this._onMouseDown({originalEvent: e.touches[0]});
+		}
+	},
+
+	_onActionEnd: function (e) {
+		console.log('_onActionEnd');
+		this._onMouseUp({originalEvent: e.changedTouches[0]});
 	},
 
 	removeHooks: function () {
@@ -288,18 +281,13 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 		this._map.removeLayer(this._poly);
 		delete this._poly;
 
-		this._mouseMarker
-			.off('mousedown', this._onMouseDown, this)
-			.off('mouseup', this._onMouseUp, this);
-		this._map.removeLayer(this._mouseMarker);
-		delete this._mouseMarker;
-
 		// clean up DOM
 		this._clearGuides();
 
-		this._map
-			.off('mousemove', this._onMouseMove, this)
-			.off('zoomend', this._onZoomEnd, this);
+		this._map.off('zoomend', this._onZoomEnd, this);
+
+		this._map.getContainer().removeEventListener('touchend', this._onActionEnd);
+		this._map.getContainer().removeEventListener('touchstart', this._onActionStart);
 	},
 
 	deleteLastVertex: function () {
@@ -398,17 +386,18 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 
 	_onMouseDown: function (e) {
 		var originalEvent = e.originalEvent;
-		this._mouseDownOrigin = L.point(originalEvent.clientX, originalEvent.clientY);
+		console.log(originalEvent);
+		this._mouseDownOrigin = L.point(originalEvent.clientX, originalEvent.clientY - 140);
 	},
 
 	_onMouseUp: function (e) {
 		if (this._mouseDownOrigin) {
 			// We detect clicks within a certain tolerance, otherwise let it
 			// be interpreted as a drag by the map
-			var distance = L.point(e.originalEvent.clientX, e.originalEvent.clientY)
-				.distanceTo(this._mouseDownOrigin);
+			var point =  L.point(e.originalEvent.clientX, e.originalEvent.clientY - 140);
+			var distance = point.distanceTo(this._mouseDownOrigin);
 			if (Math.abs(distance) < 9 * (window.devicePixelRatio || 1)) {
-				this.addVertex(e.latlng);
+				this.addVertex(this._map.containerPointToLatLng(point));
 			}
 		}
 		this._mouseDownOrigin = null;
@@ -653,6 +642,7 @@ L.Draw.Polygon = L.Draw.Polyline.extend({
 
 		// The first marker should have a click handler to close the polygon
 		if (markerCount === 1) {
+			this._markers[0].setZIndexOffset(9999);
 			this._markers[0].on('click', this._finishShape, this);
 		}
 

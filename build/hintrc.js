@@ -12,7 +12,8 @@
 	"bitwise": true,
 	"camelcase": true,
 	"curly": true,
-	"eqeqeq": true,
+	"eqeqeq": false,
+	"eqnull": true,
 	"forin": false,
 	"immed": true,
 	"latedef": true,
@@ -28,8 +29,8 @@
 	"indent": 4,
 	"trailing": true,
 	"white": true,
-	"smarttabs": true,
-	"maxlen": 150
+	"smarttabs": true
+	// "maxlen": 150
 
 	// code simplicity - not enforced but nice to check from time to time
 	// "maxstatements": 20,
