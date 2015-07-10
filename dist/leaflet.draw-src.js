@@ -262,7 +262,6 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 	},
 
 	_onActionEnd: function (e) {
-		console.log('_onActionEnd');
 		this._onMouseUp({originalEvent: e.changedTouches[0]});
 	},
 
@@ -386,7 +385,6 @@ L.Draw.Polyline = L.Draw.Feature.extend({
 
 	_onMouseDown: function (e) {
 		var originalEvent = e.originalEvent;
-		console.log(originalEvent);
 		this._mouseDownOrigin = L.point(originalEvent.clientX, originalEvent.clientY - 140);
 	},
 
